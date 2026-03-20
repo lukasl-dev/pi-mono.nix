@@ -13,8 +13,10 @@
       systems,
     }:
     let
-      rev = "v0.59.0";
-      version = "0.59.0";
+      current = builtins.fromJSON (builtins.readFile ./VERSION.json);
+      inherit (current) rev hash;
+      inherit (current.projects.coding-agent) npmDepsHash;
+      version = nixpkgs.lib.removePrefix "v" rev;
 
       forEachSystem = nixpkgs.lib.genAttrs (import systems);
     in
@@ -27,15 +29,14 @@
           src = pkgs.fetchFromGitHub {
             owner = "badlogic";
             repo = "pi-mono";
-            inherit rev;
-            hash = "sha256-EOCF/EYJ81HT8APurHK9qjrEIHG9Wsj3f5HO5wd3JEc=";
+            inherit rev hash;
           };
 
         in
         rec {
           default = coding-agent;
           coding-agent = pkgs.callPackage ./nix/coding-agent.nix {
-            inherit src version;
+            inherit src version npmDepsHash;
           };
         }
       );

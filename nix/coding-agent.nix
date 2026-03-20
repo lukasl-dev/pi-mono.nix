@@ -16,12 +16,11 @@
   fd,
   src,
   version,
+  npmDepsHash,
 }:
 buildNpmPackage {
   pname = "pi-coding-agent";
-  inherit src version;
-
-  npmDepsHash = "sha256-LYt1oKI7F85Cg1WYEx7xZiIeNOwAAs2Z1FkiHtgDVEw=";
+  inherit src version npmDepsHash;
 
   nativeBuildInputs = [
     makeWrapper

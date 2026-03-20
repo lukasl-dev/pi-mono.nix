@@ -1,0 +1,9 @@
+{
+  "rev": "v0.59.0",
+  "hash": "sha256-EOCF/EYJ81HT8APurHK9qjrEIHG9Wsj3f5HO5wd3JEc=",
+  "projects": {
+    "coding-agent": {
+      "npmDepsHash": "sha256-LYt1oKI7F85Cg1WYEx7xZiIeNOwAAs2Z1FkiHtgDVEw="
+    }
+  }
+}
