@@ -5,6 +5,7 @@
   makeWrapper,
   nodejs,
   typescript,
+  typescript-go,
   pkg-config,
   pixman,
   cairo,
@@ -26,6 +27,7 @@ buildNpmPackage {
     makeWrapper
     pkg-config
     typescript
+    typescript-go
   ];
 
   buildInputs = [
@@ -41,7 +43,6 @@ buildNpmPackage {
 
   postPatch = ''
     find packages -name "package.json" -exec sed -i \
-      -e 's/tsgo -p/tsc -p/g' \
       -e 's/--watch --preserveWatchOutput//g' \
       {} \;
 
