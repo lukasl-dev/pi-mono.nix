@@ -55,6 +55,12 @@ buildNpmPackage {
     for f in packages/ai/src/models.ts packages/ai/src/providers/amazon-bedrock.ts packages/agent/src/agent.ts; do
       [ -f "$f" ] && echo '// @ts-nocheck' | cat - "$f" > tmp && mv tmp "$f"
     done
+
+    substituteInPlace packages/coding-agent/src/modes/interactive/interactive-mode.ts \
+      --replace-fail 'const action = theme.fg("accent", getUpdateInstruction("@mariozechner/pi-coding-agent"));' \
+                     'const action = theme.fg("accent", `https://github.com/lukasl-dev/pi-mono.nix/releases/tag/v''${newVersion}`);' \
+      --replace-fail '"https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md"' \
+                     '`https://github.com/badlogic/pi-mono/blob/v''${newVersion}/packages/coding-agent/CHANGELOG.md`'
   '';
 
   buildPhase = ''
