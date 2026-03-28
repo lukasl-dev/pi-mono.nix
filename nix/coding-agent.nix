@@ -43,7 +43,7 @@ buildNpmPackage {
     fd
   ];
 
-  postPatch = ''
+  preBuild = ''
     find packages -name "package.json" -exec sed -i \
       -e 's/--watch --preserveWatchOutput//g' \
       {} \;
