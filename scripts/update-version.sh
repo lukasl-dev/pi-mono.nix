@@ -7,7 +7,7 @@ version_file=VERSION.json
 archive_base_url=https://github.com/badlogic/pi-mono/archive/refs/tags
 
 die() { echo "$*" >&2; exit 1; }
-out() { [[ -n ${GITHUB_OUTPUT:-} ]] && echo "$1=$2" >> "$GITHUB_OUTPUT"; }
+out() { [[ -n ${GITHUB_OUTPUT:-} ]] && echo "$1=$2" >> "$GITHUB_OUTPUT" || true; }
 
 write_version_json() {
   local rev=$1 hash=$2 npmDepsHash=$3 tmp

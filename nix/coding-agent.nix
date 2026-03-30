@@ -6,7 +6,6 @@
   nodejs,
   typescript,
   typescript-go,
-  jq,
   pkg-config,
   pixman,
   cairo,
@@ -29,7 +28,6 @@ buildNpmPackage {
     pkg-config
     typescript
     typescript-go
-    jq
   ];
 
   buildInputs = [
@@ -48,16 +46,7 @@ buildNpmPackage {
       -e 's/--watch --preserveWatchOutput//g' \
       {} \;
 
-    tmp=$(mktemp)
-    jq '
-      .compilerOptions.target = "ES2024"
-      | .compilerOptions.lib = ["ES2024"]
-      | .compilerOptions.strict = false
-      | .compilerOptions.noEmitOnError = false
-    ' tsconfig.base.json > "$tmp"
-    mv "$tmp" tsconfig.base.json
-
-    for f in packages/ai/src/models.ts packages/ai/src/providers/amazon-bedrock.ts packages/agent/src/agent.ts; do
+    for f in packages/ai/src/models.ts packages/agent/src/agent.ts; do
       [ -f "$f" ] && echo '// @ts-nocheck' | cat - "$f" > tmp && mv tmp "$f"
     done
 
