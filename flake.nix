@@ -35,10 +35,15 @@
         in
         rec {
           default = coding-agent;
-          coding-agent = pkgs.callPackage ./nix/coding-agent.nix {
+          coding-agent = pkgs.callPackage ./coding-agent/package.nix {
             inherit src version npmDepsHash;
           };
         }
       );
+
+      nixosModules = rec {
+        default = coding-agent;
+        coding-agent = import ./coding-agent/module.nix self;
+      };
     };
 }

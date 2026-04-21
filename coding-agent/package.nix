@@ -78,6 +78,7 @@ buildNpmPackage {
 
     makeWrapper ${nodejs}/bin/node $out/bin/pi \
       --add-flags "$out/lib/node_modules/@mariozechner/pi-coding-agent/dist/cli.js" \
+      --set PI_PACKAGE_DIR "$out/lib/node_modules/@mariozechner/pi-coding-agent" \
       --prefix NODE_PATH : "$out/lib/node_modules" \
       --prefix PATH : "${fd}/bin"
     runHook postInstall

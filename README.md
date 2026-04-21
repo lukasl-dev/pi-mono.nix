@@ -24,11 +24,23 @@ nix run github:lukasl-dev/pi-mono.nix
 }
 
 # pi-mono.nix
-{ inputs, pkgs, ... }: 
+{ inputs, pkgs, ... }:
 {
-  environment.systemPackages = [
-    inputs.pi-mono.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent
+  imports = [
+    inputs.pi-mono.nixosModules.default
   ];
+
+  programs.pi.coding-agent = {
+    enable = true;
+
+    # optional
+    # users = [ "lukas" ]; # defaults to all normal users
+
+    rules = ''
+      # AGENTS.md
+      Be concise.
+    '';
+  };
 }
 ```
 
