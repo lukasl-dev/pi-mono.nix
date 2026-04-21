@@ -33,13 +33,17 @@ nix run github:lukasl-dev/pi-mono.nix
   programs.pi.coding-agent = {
     enable = true;
 
-    # optional
+    # optional:
+    # package = inputs.pi-mono.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent;
     # users = [ "lukas" ]; # defaults to all normal users
-
-    rules = ''
-      # AGENTS.md
-      Be concise.
-    '';
+    # rules = ''
+    #   # AGENTS.md
+    #   Be concise.
+    # '';
+    # skills = [ ./skills/my-skill ];
+    # extensions = [ ./extensions/my-extension.ts ];
+    # themes = [ ./themes/catppuccin-mocha.json ];
+    # models = ./models.json;
   };
 }
 ```
