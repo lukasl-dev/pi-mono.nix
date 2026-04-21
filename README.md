@@ -1,8 +1,7 @@
 # pi-mono.nix
 
-A small Nix flake for [pi](https://github.com/badlogic/pi-mono), the terminal coding agent.
+A small Nix flake for [pi](https://github.com/badlogic/pi-mono), the terminal coding agent. It gives you:
 
-It gives you:
 - `nix run`
 - `nix build`
 - a small NixOS module for declarative setup
@@ -17,6 +16,12 @@ See [#2310](https://github.com/badlogic/pi-mono/issues/2310) for context.
 
 ```sh
 nix run github:lukasl-dev/pi-mono.nix
+```
+
+## Build
+
+```sh
+nix build .#coding-agent
 ```
 
 ## NixOS
@@ -71,8 +76,3 @@ nix run github:lukasl-dev/pi-mono.nix
 }
 ```
 
-## Build
-
-```sh
-nix build .#coding-agent
-```
