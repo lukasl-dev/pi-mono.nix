@@ -12,20 +12,39 @@ let
   normalUsers = lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users;
   selectedUsers = lib.getAttrs cfg.users normalUsers;
   invalidUsers = builtins.filter (name: !(builtins.hasAttr name normalUsers)) cfg.users;
+  environmentAttrset = if lib.isAttrs cfg.environment then cfg.environment else { };
+  invalidEnvironmentNames = builtins.filter (name: builtins.match "[A-Za-z_][A-Za-z0-9_]*" name == null) (builtins.attrNames environmentAttrset);
 
   resourceArgs =
     (lib.concatMap (path: [ "--skill" (toString path) ]) cfg.skills)
     ++ (lib.concatMap (path: [ "--extension" (toString path) ]) cfg.extensions)
     ++ (lib.concatMap (path: [ "--theme" (toString path) ]) cfg.themes);
 
+  wrapperPrelude =
+    lib.optionalString (cfg.environment != null) (
+      if lib.isAttrs cfg.environment then
+        lib.concatLines (
+          lib.mapAttrsToList (name: path: ''
+            export ${name}="$(cat ${lib.escapeShellArg (toString path)})"
+          '') cfg.environment
+        )
+      else
+        ''
+          set -a
+          . ${lib.escapeShellArg (toString cfg.environment)}
+          set +a
+        ''
+    );
+
+  wrapperArgs = lib.concatMapStringsSep " " lib.escapeShellArg resourceArgs;
+
   wrappedPackage =
-    if resourceArgs == [ ] then
+    if resourceArgs == [ ] && cfg.environment == null then
       cfg.package
     else
       pkgs.writeShellScriptBin "pi" ''
-        exec ${lib.escapeShellArg (lib.getExe cfg.package)} \
-          ${lib.concatStringsSep " \\\n          " (map lib.escapeShellArg resourceArgs)} \
-          "$@"
+        ${wrapperPrelude}
+        exec ${lib.escapeShellArg (lib.getExe cfg.package)} ${wrapperArgs} "$@"
       '';
 in
 {
@@ -115,6 +134,24 @@ in
         ./models.json
       '';
     };
+
+    environment = lib.mkOption {
+      type = lib.types.nullOr (lib.types.either lib.types.path (lib.types.attrsOf lib.types.path));
+      default = null;
+      description = ''
+        Extra environment to set before launching pi.
+
+        This can either be a shell environment file that is sourced with `set -a`,
+        or an attribute set mapping environment variable names to files whose contents
+        should be exported as the variable values.
+      '';
+      example = lib.literalExpression ''
+        {
+          OPENAI_API_KEY = config.age.secrets.openai.path;
+          ANTHROPIC_API_KEY = config.age.secrets.anthropic.path;
+        }
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable (
@@ -124,6 +161,10 @@ in
           {
             assertion = invalidUsers == [ ];
             message = "programs.pi.coding-agent.users contains unknown or non-normal users: ${lib.concatStringsSep ", " invalidUsers}";
+          }
+          {
+            assertion = invalidEnvironmentNames == [ ];
+            message = "programs.pi.coding-agent.environment contains invalid environment variable names: ${lib.concatStringsSep ", " invalidEnvironmentNames}";
           }
         ];
 

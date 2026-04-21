@@ -44,6 +44,9 @@ nix run github:lukasl-dev/pi-mono.nix
     # extensions = [ ./extensions/my-extension.ts ];
     # themes = [ ./themes/catppuccin-mocha.json ];
     # models = ./models.json;
+    # environment = {
+    #   OPENAI_API_KEY = config.age.secrets.openai.path;
+    # };
   };
 }
 ```
