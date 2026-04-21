@@ -80,6 +80,22 @@ in
         ]
       '';
     };
+
+    themes = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
+      default = [ ];
+      description = ''
+        Theme JSON files to symlink into `~/.pi/agent/themes/` for the configured
+        users.
+
+        Each path is symlinked using its basename as the symlink name.
+      '';
+      example = lib.literalExpression ''
+        [
+          ./themes/catppuccin-mocha.json
+        ]
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable (
@@ -165,6 +181,31 @@ in
                     argument = "${path}";
                   };
                 }) cfg.extensions
+              ))
+            ]
+          ) selectedUsers
+        );
+      })
+
+      (lib.mkIf (cfg.themes != [ ]) {
+        systemd.tmpfiles.settings."10-pi-coding-agent-themes" = lib.mkMerge (
+          lib.mapAttrsToList (
+            _name: user:
+            lib.mkMerge [
+              {
+                "${user.home}/.pi/agent/themes".d = {
+                  user = user.name;
+                  inherit (user) group;
+                  mode = "0755";
+                };
+              }
+              (lib.listToAttrs (
+                lib.imap0 (_i: path: {
+                  name = "${user.home}/.pi/agent/themes/${lib.strings.unsafeDiscardStringContext (baseNameOf (toString path))}";
+                  value.L = {
+                    argument = "${path}";
+                  };
+                }) cfg.themes
               ))
             ]
           ) selectedUsers
