@@ -12,6 +12,21 @@ let
   normalUsers = lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users;
   selectedUsers = lib.getAttrs cfg.users normalUsers;
   invalidUsers = builtins.filter (name: !(builtins.hasAttr name normalUsers)) cfg.users;
+
+  resourceArgs =
+    (lib.concatMap (path: [ "--skill" (toString path) ]) cfg.skills)
+    ++ (lib.concatMap (path: [ "--extension" (toString path) ]) cfg.extensions)
+    ++ (lib.concatMap (path: [ "--theme" (toString path) ]) cfg.themes);
+
+  wrappedPackage =
+    if resourceArgs == [ ] then
+      cfg.package
+    else
+      pkgs.writeShellScriptBin "pi" ''
+        exec ${lib.escapeShellArg (lib.getExe cfg.package)} \
+          ${lib.concatStringsSep " \\\n          " (map lib.escapeShellArg resourceArgs)} \
+          "$@"
+      '';
 in
 {
   options.programs.pi.coding-agent = {
@@ -51,11 +66,7 @@ in
       type = lib.types.listOf lib.types.path;
       default = [ ];
       description = ''
-        Skill directories to symlink into `~/.pi/agent/skills/` for the configured
-        users.
-
-        Each path is symlinked using its basename as the symlink name.
-        The path should be a directory containing a `SKILL.md` file.
+        Skill paths to pass to pi via repeated `--skill` flags for every invocation.
       '';
       example = lib.literalExpression ''
         [
@@ -69,10 +80,7 @@ in
       type = lib.types.listOf lib.types.path;
       default = [ ];
       description = ''
-        Extension files or directories to symlink into `~/.pi/agent/extensions/`
-        for the configured users.
-
-        Each path is symlinked using its basename as the symlink name.
+        Extension paths to pass to pi via repeated `--extension` flags for every invocation.
       '';
       example = lib.literalExpression ''
         [
@@ -85,10 +93,7 @@ in
       type = lib.types.listOf lib.types.path;
       default = [ ];
       description = ''
-        Theme JSON files to symlink into `~/.pi/agent/themes/` for the configured
-        users.
-
-        Each path is symlinked using its basename as the symlink name.
+        Theme paths to pass to pi via repeated `--theme` flags for every invocation.
       '';
       example = lib.literalExpression ''
         [
@@ -122,7 +127,7 @@ in
           }
         ];
 
-        environment.systemPackages = [ cfg.package ];
+        environment.systemPackages = [ wrappedPackage ];
       }
 
       (lib.mkIf (cfg.rules != null) {
@@ -151,80 +156,6 @@ in
           );
       })
 
-      (lib.mkIf (cfg.skills != [ ]) {
-        systemd.tmpfiles.settings."10-pi-coding-agent-skills" = lib.mkMerge (
-          lib.mapAttrsToList (
-            _name: user:
-            lib.mkMerge [
-              {
-                "${user.home}/.pi/agent/skills".d = {
-                  user = user.name;
-                  inherit (user) group;
-                  mode = "0755";
-                };
-              }
-              (lib.listToAttrs (
-                lib.imap0 (_i: path: {
-                  name = "${user.home}/.pi/agent/skills/${lib.strings.unsafeDiscardStringContext (baseNameOf (toString path))}";
-                  value.L = {
-                    argument = "${path}";
-                  };
-                }) cfg.skills
-              ))
-            ]
-          ) selectedUsers
-        );
-      })
-
-      (lib.mkIf (cfg.extensions != [ ]) {
-        systemd.tmpfiles.settings."10-pi-coding-agent-extensions" = lib.mkMerge (
-          lib.mapAttrsToList (
-            _name: user:
-            lib.mkMerge [
-              {
-                "${user.home}/.pi/agent/extensions".d = {
-                  user = user.name;
-                  inherit (user) group;
-                  mode = "0755";
-                };
-              }
-              (lib.listToAttrs (
-                lib.imap0 (_i: path: {
-                  name = "${user.home}/.pi/agent/extensions/${lib.strings.unsafeDiscardStringContext (baseNameOf (toString path))}";
-                  value.L = {
-                    argument = "${path}";
-                  };
-                }) cfg.extensions
-              ))
-            ]
-          ) selectedUsers
-        );
-      })
-
-      (lib.mkIf (cfg.themes != [ ]) {
-        systemd.tmpfiles.settings."10-pi-coding-agent-themes" = lib.mkMerge (
-          lib.mapAttrsToList (
-            _name: user:
-            lib.mkMerge [
-              {
-                "${user.home}/.pi/agent/themes".d = {
-                  user = user.name;
-                  inherit (user) group;
-                  mode = "0755";
-                };
-              }
-              (lib.listToAttrs (
-                lib.imap0 (_i: path: {
-                  name = "${user.home}/.pi/agent/themes/${lib.strings.unsafeDiscardStringContext (baseNameOf (toString path))}";
-                  value.L = {
-                    argument = "${path}";
-                  };
-                }) cfg.themes
-              ))
-            ]
-          ) selectedUsers
-        );
-      })
 
       (lib.mkIf (cfg.models != null) {
         systemd.tmpfiles.settings."10-pi-coding-agent-models" = lib.mkMerge (
