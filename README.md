@@ -64,6 +64,9 @@ nix build .#coding-agent
     # extra themes
     # themes = [ ./themes/catppuccin-mocha.json ];
 
+    # extra prompt templates
+    # promptTemplates = [ ./prompts ./prompt-templates/review.md ];
+
     # ~/.pi/agent/models.json
     # models = ./models.json;
 

@@ -22,7 +22,8 @@ let
     ++ (lib.optional (cfg.rules != null) rulesFile)
     ++ (lib.concatMap (path: [ "--skill" (toString path) ]) cfg.skills)
     ++ (lib.concatMap (path: [ "--extension" (toString path) ]) cfg.extensions)
-    ++ (lib.concatMap (path: [ "--theme" (toString path) ]) cfg.themes);
+    ++ (lib.concatMap (path: [ "--theme" (toString path) ]) cfg.themes)
+    ++ (lib.concatMap (path: [ "--prompt-template" (toString path) ]) cfg.promptTemplates);
 
   wrapperPrelude =
     lib.optionalString (cfg.environment != null) (
@@ -121,6 +122,20 @@ in
       example = lib.literalExpression ''
         [
           ./themes/catppuccin-mocha.json
+        ]
+      '';
+    };
+
+    promptTemplates = lib.mkOption {
+      type = lib.types.listOf lib.types.path;
+      default = [ ];
+      description = ''
+        Prompt template paths to pass to pi via repeated `--prompt-template` flags for every invocation.
+      '';
+      example = lib.literalExpression ''
+        [
+          ./prompts
+          ./prompt-templates/review.md
         ]
       '';
     };
