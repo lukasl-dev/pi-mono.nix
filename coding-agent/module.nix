@@ -9,37 +9,40 @@ self:
 let
   cfg = config.programs.pi.coding-agent;
 
-  normalUsers = lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users;
-  selectedUsers = lib.getAttrs cfg.users normalUsers;
-  invalidUsers = builtins.filter (name: !(builtins.hasAttr name normalUsers)) cfg.users;
-  environmentAttrset = if lib.isAttrs cfg.environment then cfg.environment else { };
-  invalidEnvironmentNames = builtins.filter (name: builtins.match "[A-Za-z_][A-Za-z0-9_]*" name == null) (builtins.attrNames environmentAttrset);
+  environmentFiles = lib.optionalAttrs (lib.isAttrs cfg.environment) cfg.environment;
+  rulesPath = if cfg.rules == null then null else pkgs.writeText "pi-AGENTS.md" cfg.rules;
 
-  rulesFile = lib.optionalString (cfg.rules != null) (toString (pkgs.writeText "pi-AGENTS.md" cfg.rules));
+  pathFlags =
+    flag: paths:
+    lib.concatMap (path: [
+      flag
+      (toString path)
+    ]) paths;
 
   resourceArgs =
-    (lib.optional (cfg.rules != null) "--append-system-prompt")
-    ++ (lib.optional (cfg.rules != null) rulesFile)
-    ++ (lib.concatMap (path: [ "--skill" (toString path) ]) cfg.skills)
-    ++ (lib.concatMap (path: [ "--extension" (toString path) ]) cfg.extensions)
-    ++ (lib.concatMap (path: [ "--theme" (toString path) ]) cfg.themes)
-    ++ (lib.concatMap (path: [ "--prompt-template" (toString path) ]) cfg.promptTemplates);
+    (lib.optionals (rulesPath != null) [
+      "--append-system-prompt"
+      (toString rulesPath)
+    ])
+    ++ pathFlags "--skill" cfg.skills
+    ++ pathFlags "--extension" cfg.extensions
+    ++ pathFlags "--theme" cfg.themes
+    ++ pathFlags "--prompt-template" cfg.promptTemplates;
 
-  wrapperPrelude =
-    lib.optionalString (cfg.environment != null) (
-      if lib.isAttrs cfg.environment then
-        lib.concatLines (
-          lib.mapAttrsToList (name: path: ''
-            export ${name}="$(cat ${lib.escapeShellArg (toString path)})"
-          '') cfg.environment
-        )
-      else
-        ''
-          set -a
-          . ${lib.escapeShellArg (toString cfg.environment)}
-          set +a
-        ''
-    );
+  wrapperPrelude = lib.optionalString (cfg.environment != null) (
+    if lib.isAttrs cfg.environment then
+      lib.concatLines (
+        lib.mapAttrsToList (name: path: ''
+          export ${name}="$(cat ${lib.escapeShellArg (toString path)})"
+        '') environmentFiles
+      )
+    else
+      ''
+        set -a
+        . ${lib.escapeShellArg (toString cfg.environment)}
+        set +a
+      ''
+  );
 
   wrapperArgs = lib.concatMapStringsSep " " lib.escapeShellArg resourceArgs;
   extraFlagsArgs = lib.concatMapStringsSep " " lib.escapeShellArg cfg.extraFlags;
@@ -66,10 +69,12 @@ in
 
     users = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = builtins.attrNames normalUsers;
-      defaultText = lib.literalExpression "builtins.attrNames (lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users)";
+      default = [ ];
+      defaultText = lib.literalExpression "[ ] (interpreted as all normal users)";
       description = ''
         Normal users whose `~/.pi/agent` should be managed.
+
+        An empty list means all normal users.
       '';
       example = [ "lukas" ];
     };
@@ -145,10 +150,10 @@ in
       type = lib.types.nullOr lib.types.path;
       default = null;
       description = ''
-        Path to a custom `models.json` file to symlink to `~/.pi/agent/models.json`.
+        Path to a custom `models.json` file to keep at `~/.pi/agent/models.json`.
 
         This file defines custom providers and models for pi to use.
-        When set to `null`, no symlink is created and pi uses its default models.
+        When set to `null`, nothing is managed and pi uses its default models.
       '';
       example = lib.literalExpression ''
         ./models.json
@@ -190,29 +195,66 @@ in
       {
         assertions = [
           {
-            assertion = invalidUsers == [ ];
-            message = "programs.pi.coding-agent.users contains unknown or non-normal users: ${lib.concatStringsSep ", " invalidUsers}";
+            assertion =
+              let
+                invalid = builtins.filter (
+                  name:
+                  !(builtins.hasAttr name (lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users))
+                ) cfg.users;
+              in
+              invalid == [ ];
+            message =
+              let
+                invalid = builtins.filter (
+                  name:
+                  !(builtins.hasAttr name (lib.filterAttrs (_: user: user.isNormalUser or false) config.users.users))
+                ) cfg.users;
+              in
+              "programs.pi.coding-agent.users contains unknown or non-normal users: ${lib.concatStringsSep ", " invalid}";
           }
           {
-            assertion = invalidEnvironmentNames == [ ];
-            message = "programs.pi.coding-agent.environment contains invalid environment variable names: ${lib.concatStringsSep ", " invalidEnvironmentNames}";
+            assertion =
+              let
+                invalid = builtins.filter (name: builtins.match "[A-Za-z_][A-Za-z0-9_]*" name == null) (
+                  builtins.attrNames environmentFiles
+                );
+              in
+              invalid == [ ];
+            message =
+              let
+                invalid = builtins.filter (name: builtins.match "[A-Za-z_][A-Za-z0-9_]*" name == null) (
+                  builtins.attrNames environmentFiles
+                );
+              in
+              "programs.pi.coding-agent.environment contains invalid environment variable names: ${lib.concatStringsSep ", " invalid}";
           }
         ];
 
         environment.systemPackages = [ wrappedPackage ];
       }
 
-      (lib.mkIf (cfg.models != null) {
-        systemd.tmpfiles.settings."10-pi-coding-agent-models" = lib.mkMerge (
-          lib.mapAttrsToList (
-            _name: user: {
-              "${user.home}/.pi/agent/models.json".L = {
-                argument = "${cfg.models}";
-              };
-            }
-          ) selectedUsers
-        );
-      })
+      (lib.mkIf (cfg.models != null) (
+        let
+          rules = [
+            "d %h/.pi 0700 - - -"
+            "d %h/.pi/agent 0700 - - -"
+            "L %h/.pi/agent/models.json - - - - ${cfg.models}"
+          ];
+        in
+        lib.mkMerge [
+          (lib.mkIf (cfg.users == [ ]) {
+            systemd.user.tmpfiles.rules = rules;
+          })
+          (lib.mkIf (cfg.users != [ ]) {
+            systemd.user.tmpfiles.users = builtins.listToAttrs (
+              map (name: {
+                inherit name;
+                value.rules = rules;
+              }) cfg.users
+            );
+          })
+        ]
+      ))
     ]
   );
 }
