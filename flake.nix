@@ -41,6 +41,12 @@
         }
       );
 
+      overlays = {
+        default = _final: prev: {
+          pi-coding-agent = self.packages.${prev.stdenv.hostPlatform.system}.coding-agent;
+        };
+      };
+
       nixosModules = rec {
         default = coding-agent;
         coding-agent = import ./coding-agent/module.nix self;
