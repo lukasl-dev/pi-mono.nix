@@ -24,7 +24,7 @@ nix run github:lukasl-dev/pi-mono.nix
 nix build .#coding-agent
 ```
 
-## NixOS
+## NixOS Module
 
 ```nix
 # flake.nix
@@ -79,6 +79,27 @@ nix build .#coding-agent
     # };
     # environment = ./pi.env;
   };
+}
+```
+
+## Overlay
+
+```nix
+# flake.nix
+{
+  inputs.pi-mono.url = "github:lukasl-dev/pi-mono.nix";
+  # ...
+}
+
+# configuration.nix or a module
+{ inputs, pkgs, ... }:
+{
+  nixpkgs.overlays = [ inputs.pi-mono.overlays.default ];
+
+  environment.systemPackages = [
+    # aliases to inputs.pi-mono.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent
+    pkgs.pi-coding-agent
+  ];
 }
 ```
 
