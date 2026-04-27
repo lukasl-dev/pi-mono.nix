@@ -55,6 +55,11 @@ buildNpmPackage {
                      'const action = theme.fg("accent", `https://github.com/lukasl-dev/pi-mono.nix/releases/tag/v''${newVersion}`);' \
       --replace-fail '"https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md"' \
                      '`https://github.com/badlogic/pi-mono/blob/v''${newVersion}/packages/coding-agent/CHANGELOG.md`'
+
+    cp ${../models.generated.ts} packages/ai/src/models.generated.ts
+
+    substituteInPlace packages/ai/package.json \
+      --replace-fail 'npm run generate-models && ' '''
   '';
 
   buildPhase = ''

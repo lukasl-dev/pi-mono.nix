@@ -1,5 +1,5 @@
-# shellcheck shell=bash
 #!/usr/bin/env -S nix shell nixpkgs#bash nixpkgs#git nixpkgs#jq nixpkgs#gnutar nixpkgs#nix -c bash
+# shellcheck shell=bash
 set -euo pipefail
 
 repo_url=https://github.com/badlogic/pi-mono.git
