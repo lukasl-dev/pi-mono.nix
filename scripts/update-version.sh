@@ -4,6 +4,7 @@ set -euo pipefail
 
 repo_url=https://github.com/badlogic/pi-mono.git
 version_file=VERSION.json
+models_file=models.generated.ts
 archive_base_url=https://github.com/badlogic/pi-mono/archive/refs/tags
 
 die() { echo "$*" >&2; exit 1; }
@@ -44,10 +45,12 @@ fi
 src_hash=$(nix store prefetch-file --json --unpack "${archive_base_url}/${latest_rev}.tar.gz" | jq -r .hash)
 archive_path=$(nix store prefetch-file --json "${archive_base_url}/${latest_rev}.tar.gz" | jq -r .storePath)
 
-backup=$(mktemp)
+version_backup=$(mktemp)
+models_backup=$(mktemp)
 tmpdir=$(mktemp -d)
-cp "$version_file" "$backup"
-trap 'cp "$backup" "$version_file" 2>/dev/null || true; rm -f "$backup"; rm -rf "$tmpdir"' EXIT
+cp "$version_file" "$version_backup"
+cp "$models_file" "$models_backup"
+trap 'cp "$version_backup" "$version_file" 2>/dev/null || true; cp "$models_backup" "$models_file" 2>/dev/null || true; rm -f "$version_backup" "$models_backup"; rm -rf "$tmpdir"' EXIT
 
 tar -xzf "$archive_path" --strip-components=1 -C "$tmpdir"
 [[ -f "$tmpdir/package-lock.json" ]] || die "Upstream archive does not contain package-lock.json"
@@ -55,10 +58,11 @@ npm_deps_hash=$(nix run --inputs-from . nixpkgs#prefetch-npm-deps -- "$tmpdir/pa
 [[ -n "$npm_deps_hash" ]] || die "Failed to determine npmDepsHash"
 
 write_version_json "$latest_rev" "$src_hash" "$npm_deps_hash"
+./scripts/generate-models.sh
 nix build .#coding-agent --no-link >/dev/null
 
 trap - EXIT
-rm -f "$backup"
+rm -f "$version_backup" "$models_backup"
 rm -rf "$tmpdir"
 
 echo "Updated VERSION.json to $latest_rev"
