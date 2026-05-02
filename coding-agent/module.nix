@@ -53,7 +53,13 @@ let
     else
       pkgs.writeShellScriptBin "pi" ''
         ${wrapperPrelude}
-        exec ${lib.escapeShellArg (lib.getExe cfg.package)} ${wrapperArgs} ${extraFlagsArgs} "$@"
+        case "''${1-}" in install|remove|uninstall|update|list|config)
+            exec ${lib.escapeShellArg (lib.getExe cfg.package)} "$@"
+            ;;
+          *)
+            exec ${lib.escapeShellArg (lib.getExe cfg.package)} ${wrapperArgs} ${extraFlagsArgs} "$@"
+            ;;
+        esac
       '';
 in
 {
