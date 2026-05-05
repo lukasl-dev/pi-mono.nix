@@ -41,6 +41,14 @@
         }
       );
 
+      formatter = forEachSystem (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        pkgs.alejandra
+      );
+
       overlays = {
         default = _final: prev: {
           pi-coding-agent = self.packages.${prev.stdenv.hostPlatform.system}.coding-agent;
