@@ -42,26 +42,26 @@ buildNpmPackage {
   ];
 
   preBuild = ''
-        find packages -name "package.json" -exec sed -i \
-          -e 's/--watch --preserveWatchOutput//g' \
-          {} \;
+    find packages -name "package.json" -exec sed -i \
+      -e 's/--watch --preserveWatchOutput//g' \
+      {} \;
 
-        for f in packages/ai/src/models.ts packages/agent/src/agent.ts packages/tui/src/utils.ts; do
-          [ -f "$f" ] && echo '// @ts-nocheck' | cat - "$f" > tmp && mv tmp "$f"
-        done
+    for f in packages/ai/src/models.ts packages/agent/src/agent.ts packages/tui/src/utils.ts; do
+      [ -f "$f" ] && echo '// @ts-nocheck' | cat - "$f" > tmp && mv tmp "$f"
+    done
 
-        substituteInPlace packages/coding-agent/src/modes/interactive/interactive-mode.ts \
-          --replace-fail '		const action = theme.fg("accent", `''${APP_NAME} update`);
-    		const updateInstruction = theme.fg("muted", `New version ''${newVersion} is available. Run `) + action;' \
-                         '		const action = theme.fg("accent", `https://github.com/lukasl-dev/pi-mono.nix/releases/tag/v''${newVersion}`);
-    		const updateInstruction = theme.fg("muted", `New version ''${newVersion} is available. Run `) + action;' \
-          --replace-fail '"https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md"' \
-                         '`https://github.com/badlogic/pi-mono/blob/v''${newVersion}/packages/coding-agent/CHANGELOG.md`'
+    substituteInPlace packages/coding-agent/src/modes/interactive/interactive-mode.ts \
+      --replace-fail '		const action = theme.fg("accent", `''${APP_NAME} update`);
+    const updateInstruction = theme.fg("muted", `New version ''${newVersion} is available. Run `) + action;' \
+                     '		const action = theme.fg("accent", `https://github.com/lukasl-dev/pi-mono.nix/releases/tag/v''${newVersion}`);
+    const updateInstruction = theme.fg("muted", `New version ''${newVersion} is available. Run `) + action;' \
+      --replace-fail '"https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md"' \
+                     '`https://github.com/badlogic/pi-mono/blob/v''${newVersion}/packages/coding-agent/CHANGELOG.md`'
 
-        cp ${../models.generated.ts} packages/ai/src/models.generated.ts
+    cp ${../models.generated.ts} packages/ai/src/models.generated.ts
 
-        substituteInPlace packages/ai/package.json \
-          --replace-fail 'npm run generate-models && ' '''
+    substituteInPlace packages/ai/package.json \
+      --replace-fail 'npm run generate-models && ' '''
   '';
 
   buildPhase = ''
@@ -96,6 +96,6 @@ buildNpmPackage {
     homepage = "https://github.com/badlogic/pi-mono";
     license = lib.licenses.mit;
     mainProgram = "pi";
-    maintainers = [ ];
+    maintainers = [];
   };
 }
