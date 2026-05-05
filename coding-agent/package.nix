@@ -96,6 +96,12 @@ buildNpmPackage {
     homepage = "https://github.com/badlogic/pi-mono";
     license = lib.licenses.mit;
     mainProgram = "pi";
-    maintainers = [];
+    maintainers = [
+      {
+        name = "Lukas";
+        email = "me@lukasl.dev";
+        github = "lukasl-dev";
+      }
+    ];
   };
 }
