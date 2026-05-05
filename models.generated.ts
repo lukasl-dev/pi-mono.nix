@@ -8700,7 +8700,7 @@ export const MODELS = {
 				cacheWrite: 3.75,
 			},
 			contextWindow: 200000,
-			maxTokens: 128000,
+			maxTokens: 64000,
 		} satisfies Model<"openai-completions">,
 		"anthropic/claude-3.7-sonnet:thinking": {
 			id: "anthropic/claude-3.7-sonnet:thinking",
