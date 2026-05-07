@@ -15,10 +15,26 @@
   giflib,
   librsvg,
   fd,
+  git,
+  ripgrep,
   src,
   version,
   npmDepsHash,
 }:
+let
+  # Tools pi shells out to at runtime. Adding them here makes them
+  # visible only to pi's subprocess tree, not to the user's shell.
+  #
+  # - nodejs: provides `node` AND `npm` (npm ships in the same bin/).
+  #   Required for `pi install npm:...`.
+  # - git:    required for `pi install git:...`.
+  # - ripgrep, fd: pi's grep and find tools. Without these on PATH,
+  #   pi auto-downloads release tarballs from GitHub at runtime
+  #   (see src/utils/tools-manager.ts), which is exactly the kind
+  #   of unreproducible-at-runtime behavior a Nix package should
+  #   short-circuit.
+  runtimeBins = lib.makeBinPath [ nodejs git ripgrep fd ];
+in
 buildNpmPackage {
   pname = "pi-coding-agent";
   inherit src version npmDepsHash;
@@ -85,7 +101,9 @@ buildNpmPackage {
       --add-flags "$out/lib/node_modules/@mariozechner/pi-coding-agent/dist/cli.js" \
       --set PI_PACKAGE_DIR "$out/lib/node_modules/@mariozechner/pi-coding-agent" \
       --prefix NODE_PATH : "$out/lib/node_modules" \
-      --prefix PATH : "${fd}/bin"
+      --prefix PATH : "${runtimeBins}" \
+      --run 'export NPM_CONFIG_PREFIX="''${NPM_CONFIG_PREFIX:-$HOME/.local/share/pi/npm-prefix}"' \
+      --run 'mkdir -p "$NPM_CONFIG_PREFIX"'
     runHook postInstall
   '';
 
