@@ -244,7 +244,7 @@ in
           rules = [
             "d %h/.pi 0700 - - -"
             "d %h/.pi/agent 0700 - - -"
-            "L %h/.pi/agent/models.json - - - - ${cfg.models}"
+            "L+ %h/.pi/agent/models.json - - - - ${cfg.models}"
           ];
         in
         lib.mkMerge [
