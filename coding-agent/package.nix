@@ -97,7 +97,7 @@ buildNpmPackage {
       --add-flags "$out/lib/node_modules/@mariozechner/pi-coding-agent/dist/cli.js" \
       --set PI_PACKAGE_DIR "$out/lib/node_modules/@mariozechner/pi-coding-agent" \
       --prefix NODE_PATH : "$out/lib/node_modules" \
-      --prefix PATH : "${runtimeBins}" \
+      --suffix PATH : "${runtimeBins}" \
       --run 'export NPM_CONFIG_PREFIX="''${NPM_CONFIG_PREFIX:-$HOME/.local/share/pi/npm-prefix}"' \
       --run 'mkdir -p "$NPM_CONFIG_PREFIX"'
     runHook postInstall
