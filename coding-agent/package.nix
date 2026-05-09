@@ -98,8 +98,7 @@ buildNpmPackage {
       --set PI_PACKAGE_DIR "$out/lib/node_modules/@mariozechner/pi-coding-agent" \
       --prefix NODE_PATH : "$out/lib/node_modules" \
       --suffix PATH : "${runtimeBins}" \
-      --run 'export NPM_CONFIG_PREFIX="''${NPM_CONFIG_PREFIX:-$HOME/.local/share/pi/npm-prefix}"' \
-      --run 'mkdir -p "$NPM_CONFIG_PREFIX"'
+      --run 'export NPM_CONFIG_PREFIX="''${NPM_CONFIG_PREFIX:-''${XDG_DATA_HOME:-$HOME/.local/share}/pi/npm}"'
     runHook postInstall
   '';
 
