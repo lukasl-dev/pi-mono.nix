@@ -1,4 +1,4 @@
-# pi-mono.nix
+# pi.nix
 
 A small Nix flake for [pi](https://github.com/earendil-works/pi), the terminal coding agent. It gives you:
 
@@ -15,7 +15,7 @@ See [#2310](https://github.com/earendil-works/pi/issues/2310) for context.
 ## Run
 
 ```sh
-nix run github:lukasl-dev/pi-mono.nix
+nix run github:lukasl-dev/pi.nix
 ```
 
 ## Build
@@ -29,22 +29,22 @@ nix build .#coding-agent
 ```nix
 # flake.nix
 {
-  inputs.pi-mono.url = "github:lukasl-dev/pi-mono.nix";
+  inputs.pi.url = "github:lukasl-dev/pi.nix";
   # ...
 }
 
-# pi-mono.nix
+# pi.nix
 { config, inputs, pkgs, ... }:
 {
   imports = [
-    inputs.pi-mono.nixosModules.default
+    inputs.pi.nixosModules.default
   ];
 
   programs.pi.coding-agent = {
     enable = true;
 
     # custom package
-    # package = inputs.pi-mono.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent;
+    # package = inputs.pi.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent;
 
     # target users
     # users = [ "lukas" ]; # defaults to all normal users
@@ -87,17 +87,17 @@ nix build .#coding-agent
 ```nix
 # flake.nix
 {
-  inputs.pi-mono.url = "github:lukasl-dev/pi-mono.nix";
+  inputs.pi.url = "github:lukasl-dev/pi.nix";
   # ...
 }
 
 # configuration.nix or a module
 { inputs, pkgs, ... }:
 {
-  nixpkgs.overlays = [ inputs.pi-mono.overlays.default ];
+  nixpkgs.overlays = [ inputs.pi.overlays.default ];
 
   environment.systemPackages = [
-    # aliases to inputs.pi-mono.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent
+    # aliases to inputs.pi.packages.${pkgs.stdenv.hostPlatform.system}.coding-agent
     pkgs.pi-coding-agent
   ];
 }
