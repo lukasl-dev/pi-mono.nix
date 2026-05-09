@@ -15,25 +15,21 @@
   giflib,
   librsvg,
   fd,
-  git,
+  gitMinimal,
+  openssh,
   ripgrep,
   src,
   version,
   npmDepsHash,
 }:
 let
-  # Tools pi shells out to at runtime. Adding them here makes them
-  # visible only to pi's subprocess tree, not to the user's shell.
-  #
-  # - nodejs: provides `node` AND `npm` (npm ships in the same bin/).
-  #   Required for `pi install npm:...`.
-  # - git:    required for `pi install git:...`.
-  # - ripgrep, fd: pi's grep and find tools. Without these on PATH,
-  #   pi auto-downloads release tarballs from GitHub at runtime
-  #   (see src/utils/tools-manager.ts), which is exactly the kind
-  #   of unreproducible-at-runtime behavior a Nix package should
-  #   short-circuit.
-  runtimeBins = lib.makeBinPath [ nodejs git ripgrep fd ];
+  runtimeBins = lib.makeBinPath [
+    nodejs
+    gitMinimal
+    openssh # required for git SSH clones
+    ripgrep
+    fd
+  ];
 in
 buildNpmPackage {
   pname = "pi-coding-agent";
