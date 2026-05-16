@@ -12,16 +12,35 @@ The upstream `pi` repo does not ship a `flake.nix`, so this exists to make pi ea
 
 See [#2310](https://github.com/earendil-works/pi/issues/2310) for context.
 
+## Binary cache
+
+Build results are pushed to [pi.cachix.org](http://pi.cachix.org/). The flake declares the substituter and public key via `nixConfig`, so consumers just need `--accept-flake-config`, or:
+
+```nix
+nix.settings = {
+    extra-substituters = [ "https://pi.cachix.org" ];
+    extra-trusted-public-keys = [
+        "pi.cachix.org-1:lGeoGJaZ5ZDabuRzkcD5EBTNnDM4HJ1vqeOxlWk1Flk="
+    ];
+};
+```
+
+```sh
+nix build github:lukasl-dev/pi.nix --accept-flake-config
+```
+
 ## Run
 
 ```sh
-nix run github:lukasl-dev/pi.nix
+nix run github:lukasl-dev/pi.nix --accept-flake-config
 ```
 
 ## Build
 
 ```sh
-nix build .#coding-agent
+nix build github:lukasl-dev/pi.nix --accept-flake-config
+# or locally:
+nix build .#coding-agent --accept-flake-config
 ```
 
 ## NixOS Module
